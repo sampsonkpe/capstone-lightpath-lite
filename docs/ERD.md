@@ -1,26 +1,29 @@
 # Entity Relationship Diagram (ERD) – LightPath Lite
 
-This diagram represents the database schema for the LightPath Lite backend, covering users, passengers, conductors, buses, routes, trips, bookings, and weather integration.
+This document represents the database schema for the LightPath Lite backend:
+Covering users, passengers, conductors, buses, routes, trips, bookings, and weather integration.
 
 erDiagram
     USER {
-        int id PK
-        string username
+        int user_id PK
         string email
         string password
-        datetime date_joined
+	string role
+        datetime created_at
     }
 
     PASSENGER {
         int passenger_id PK
+        int user_id FK
         string name
-        string contact_number
+	string contact_number
         string username
         string email
     }
 
     CONDUCTOR {
         int conductor_id PK
+	int user_id FK
         string name
         string phone_number
         int bus_id FK
@@ -29,12 +32,14 @@ erDiagram
 
     BUS {
         int bus_id PK
+        int conductor_id FK
         string registration_number
         int capacity
     }
 
     ROUTE {
         int route_id PK
+        int bus_id FK
         string start_location
         string end_location
         decimal distance
@@ -70,11 +75,10 @@ erDiagram
     %% Relationships
     USER ||--o{ PASSENGER : "can be"
     USER ||--o{ CONDUCTOR : "can be"
+    CONDUCTOR ||--o{ BUS : "manages"
+    BUS ||--o{ ROUTE : "assigned to"
+    ROUTE ||--o{ TRIP : "contains"
     PASSENGER ||--o{ BOOKING : "makes"
-    BOOKING }o--|| TRIP : "for"
-    CONDUCTOR ||--o{ TRIP : "assigned to"
-    BUS ||--o{ TRIP : "used for"
-    ROUTE ||--o{ TRIP : "taken on"
-    TRIP ||--o{ WEATHER : "has"
-    CONDUCTOR }o--|| BUS : "operates"
-    CONDUCTOR }o--|| ROUTE : "manages"
+    TRIP ||--o{ BOOKING : "has"
+    TRIP ||--o{ TICKET : "generates"
+    BOOKING ||--o{ PAYMENT : "initiates"
