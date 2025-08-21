@@ -12,4 +12,4 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ("name", "description")
+    list_display = ("name",)
