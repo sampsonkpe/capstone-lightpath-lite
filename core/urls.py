@@ -6,7 +6,10 @@ from .views import (
     BookingListCreateView, BookingRetrieveUpdateDestroyView,
     TicketListCreateView, TicketRetrieveUpdateDestroyView,
     PaymentListCreateView, PaymentRetrieveUpdateDestroyView,
+    ConductorListCreateView, ConductorRetrieveUpdateDestroyView,
 )
+
+app_name = "core"
 
 urlpatterns = [
     # Bus
@@ -32,5 +35,8 @@ urlpatterns = [
     # Payment
     path("payments/", PaymentListCreateView.as_view(), name="payment-list-create"),
     path("payments/<int:pk>/", PaymentRetrieveUpdateDestroyView.as_view(), name="payment-detail"),
-]
 
+    # Conductor
+    path("conductors/", ConductorListCreateView.as_view(), name="conductor-list-create"),
+    path("conductors/<int:pk>/", ConductorRetrieveUpdateDestroyView.as_view(), name="conductor-detail"),
+]
