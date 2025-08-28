@@ -95,7 +95,7 @@ class BookingListCreateView(RoleMixin, generics.ListCreateAPIView):
         user = self.request.user
         if role_name == "admin":
             serializer.save()
-        else
+        else:
             passenger = getattr(user, "passenger_profile", None)
             if not passenger:
                 raise PermissionDenied("Only passengers can create bookings.")
@@ -150,7 +150,7 @@ class TicketListCreateView(RoleMixin, generics.ListCreateAPIView):
                 raise PermissionDenied("Passengers can only create tickets for their own bookings.")
             serializer.save()
         else:
-        raise PermissionDenied("You do not have permission to create tickets.")
+            raise PermissionDenied("You do not have permission to create tickets.")
 
 
 class TicketRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
