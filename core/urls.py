@@ -7,6 +7,7 @@ from .views import (
     TicketListCreateView, TicketRetrieveUpdateDestroyView,
     PaymentListCreateView, PaymentRetrieveUpdateDestroyView,
     ConductorListCreateView, ConductorRetrieveUpdateDestroyView,
+    WeatherListCreateView, WeatherRetrieveUpdateDestroyView,
 )
 
 app_name = "core"
@@ -39,4 +40,8 @@ urlpatterns = [
     # Conductor
     path("conductors/", ConductorListCreateView.as_view(), name="conductor-list-create"),
     path("conductors/<int:pk>/", ConductorRetrieveUpdateDestroyView.as_view(), name="conductor-detail"),
+
+    # Weather
+    path("weather/", WeatherListCreateView.as_view(), name="weather-list-create"),
+    path("weather/<int:pk>/", WeatherRetrieveUpdateDestroyView.as_view(), name="weather-detail"),
 ]

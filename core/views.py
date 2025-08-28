@@ -2,33 +2,40 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
-from .models import Bus, Route, Trip, Booking, Ticket, Payment, Conductor
+from .models import Bus, Route, Trip, Booking, Ticket, Payment, Conductor, Weather
 from .serializers import (
     BusSerializer, RouteSerializer, TripSerializer,
     BookingSerializer, TicketSerializer, PaymentSerializer,
-    ConductorSerializer
+    ConductorSerializer, WeatherSerializer
 )
 from .permissions import (
     IsAdmin, IsConductor, IsPassenger, IsOwnerOrAdmin,
     IsAdminOrReadOnly, IsAdminOrConductorOrReadOnly
 )
 
+# Helper Mixins
+class RoleMixin:
+    def get_role_name(self):
+        user = self.request.user
+        role = getattr(user, "role", None)
+        return getattr(role, "name", "").lower() if role else ""
+
 
 # Bus Views (Admin only)
-class BusListCreateView(generics.ListCreateAPIView):
+class BusListCreateView(RoleMixin, generics.ListCreateAPIView):
     queryset = Bus.objects.all()
     serializer_class = BusSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
 
-class BusRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class BusRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Bus.objects.all()
     serializer_class = BusSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
 
 # Route Views (Admins create; authenticated read)
-class RouteListCreateView(generics.ListCreateAPIView):
+class RouteListCreateView(RoleMixin, generics.ListCreateAPIView):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
@@ -41,7 +48,7 @@ class RouteRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Trip Views (Admin or Conductor can manage; auth can read)
-class TripListCreateView(generics.ListCreateAPIView):
+class TripListCreateView(RoleMixin, generics.ListCreateAPIView):
     queryset = Trip.objects.all()
     serializer_class = TripSerializer
     permission_classes = [IsAuthenticated, IsAdminOrConductorOrReadOnly]
@@ -62,23 +69,20 @@ class TripListCreateView(generics.ListCreateAPIView):
             raise PermissionDenied("Only Admins or Conductors can create trips.")
 
 
-class TripRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class TripRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Trip.objects.all()
     serializer_class = TripSerializer
     permission_classes = [IsAuthenticated, IsAdminOrConductorOrReadOnly]
 
 
 # Booking Views (Passengers)
-class BookingListCreateView(generics.ListCreateAPIView):
+class BookingListCreateView(RoleMixin, generics.ListCreateAPIView):
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Booking.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Booking.objects.all()
         passenger = getattr(user, "passenger_profile", None)
@@ -87,29 +91,24 @@ class BookingListCreateView(generics.ListCreateAPIView):
         return Booking.objects.none()
 
     def perform_create(self, serializer):
+        role_name = self.get_role_name()
         user = self.request.user
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
-            # allow admin to create bookings for any passenger (passenger_id may be supplied)
             serializer.save()
-            return
-        passenger = getattr(user, "passenger_profile", None)
-        if not passenger:
-            raise PermissionDenied("Only passengers can create bookings.")
-        serializer.save(passenger=passenger)
+        else
+            passenger = getattr(user, "passenger_profile", None)
+            if not passenger:
+                raise PermissionDenied("Only passengers can create bookings.")
+            serializer.save(passenger=passenger)
 
 
-class BookingRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class BookingRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Booking.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Booking.objects.all()
         passenger = getattr(user, "passenger_profile", None)
@@ -119,16 +118,13 @@ class BookingRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Ticket Views
-class TicketListCreateView(generics.ListCreateAPIView):
+class TicketListCreateView(RoleMixin, generics.ListCreateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Ticket.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Ticket.objects.all()
         if role_name == "conductor":
@@ -143,32 +139,27 @@ class TicketListCreateView(generics.ListCreateAPIView):
         return Ticket.objects.none()
 
     def perform_create(self, serializer):
+        role_name = self.get_role_name()
         user = self.request.user
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         booking = serializer.validated_data.get("booking")
         if role_name == "admin":
             serializer.save()
-            return
-        if role_name == "passenger":
+        elif role_name == "passenger":
             passenger = getattr(user, "passenger_profile", None)
             if not passenger or booking.passenger != passenger:
                 raise PermissionDenied("Passengers can only create tickets for their own bookings.")
             serializer.save()
-            return
+        else:
         raise PermissionDenied("You do not have permission to create tickets.")
 
 
-class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class TicketRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Ticket.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Ticket.objects.all()
         if role_name == "conductor":
@@ -183,16 +174,13 @@ class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Payment Views
-class PaymentListCreateView(generics.ListCreateAPIView):
+class PaymentListCreateView(RoleMixin, generics.ListCreateAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Payment.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Payment.objects.all()
         passenger = getattr(user, "passenger_profile", None)
@@ -201,32 +189,26 @@ class PaymentListCreateView(generics.ListCreateAPIView):
         return Payment.objects.none()
 
     def perform_create(self, serializer):
+        role_name = self.get_role_name()
         user = self.request.user
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         booking = serializer.validated_data.get("booking")
         if role_name == "admin":
             serializer.save()
-            return
-        if role_name == "passenger":
+        elif role_name == "passenger":
             passenger = getattr(user, "passenger_profile", None)
             if not passenger or booking.passenger != passenger:
                 raise PermissionDenied("Passengers can only make payments for their own bookings.")
             serializer.save()
-            return
         raise PermissionDenied("You do not have permission to create payments.")
 
 
-class PaymentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class PaymentRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
+        role_name = self.get_role_name()
         user = self.request.user
-        if not getattr(user, "is_authenticated", False):
-            return Payment.objects.none()
-        role = getattr(user, "role", None)
-        role_name = getattr(role, "name", "").lower() if role else ""
         if role_name == "admin":
             return Payment.objects.all()
         passenger = getattr(user, "passenger_profile", None)
@@ -236,13 +218,26 @@ class PaymentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Conductor Views (Admin-managed)
-class ConductorListCreateView(generics.ListCreateAPIView):
+class ConductorListCreateView(RoleMixin, generics.ListCreateAPIView):
     queryset = Conductor.objects.all()
     serializer_class = ConductorSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
 
-class ConductorRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class ConductorRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Conductor.objects.all()
     serializer_class = ConductorSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
+
+
+# Weather Views (Admin-managed)
+class WeatherListCreateView(RoleMixin, generics.ListCreateAPIView):
+    queryset = Weather.objects.all()
+    serializer_class = WeatherSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
+
+class WeatherRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Weather.objects.all()
+    serializer_class = WeatherSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
