@@ -36,6 +36,10 @@ class UserManager(BaseUserManager):
 
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    
+    class Meta:
+        verbose_name = "Role"
+        verbose_name_plural = "Roles"
 
     def __str__(self):
         return self.name
@@ -52,6 +56,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+            
+    class Meta:
+        verbose_name = "Passenger"
+        verbose_name_plural = "Passengers"
 
     def __str__(self):
         return self.email
@@ -63,6 +71,10 @@ class Passenger(models.Model):
     full_name = models.CharField(max_length=100, default="Passenger")
     contact_number = models.CharField(max_length=20, default="UNKNOWN")
     username = models.CharField(max_length=50, unique=True, default="passenger_user")
+            
+    class Meta:
+        verbose_name = "Passenger"
+        verbose_name_plural = "Passengers"
 
     def __str__(self):
         return self.full_name
@@ -73,6 +85,10 @@ class Conductor(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conductor_profiles")
     full_name = models.CharField(max_length=100, default="Conductor")
     contact_number = models.CharField(max_length=20, default="UNKNOWN")
+            
+    class Meta:
+        verbose_name = "Conductor"
+        verbose_name_plural = "Conductors"
 
     def __str__(self):
         return self.full_name
@@ -83,6 +99,10 @@ class Bus(models.Model):
     conductor = models.ForeignKey(Conductor, on_delete=models.CASCADE, related_name="buses")
     registration_number = models.CharField(max_length=20, unique=True, default="BUS-UNKNOWN")
     capacity = models.PositiveIntegerField(default=20)
+            
+    class Meta:
+        verbose_name = "Bus"
+        verbose_name_plural = "Buses"
 
     def __str__(self):
         return f"{self.registration_number} - Capacity {self.capacity}"
@@ -93,6 +113,10 @@ class Route(models.Model):
     name = models.CharField(max_length=100, default="Route Name")
     start_point = models.CharField(max_length=100, default="Start")
     end_point = models.CharField(max_length=100, default="End")
+            
+    class Meta:
+        verbose_name = "Route"
+        verbose_name_plural = "Routes"
 
     def __str__(self):
         return f"{self.name}: {self.start_point} → {self.end_point}"
@@ -103,6 +127,10 @@ class Weather(models.Model):
     condition = models.CharField(max_length=100, default="Clear")
     temperature = models.FloatField(default=25.0)
     timestamp = models.DateTimeField(default=timezone.now)
+            
+    class Meta:
+        verbose_name = "Weather"
+        verbose_name_plural = "Weather"
 
     def __str__(self):
         return f"{self.condition} at {self.temperature}°C ({self.timestamp})"
@@ -116,6 +144,10 @@ class Trip(models.Model):
     weather = models.ForeignKey(Weather, on_delete=models.SET_NULL, null=True, blank=True, related_name="trips")
     start_time = models.DateTimeField(default=timezone.now)
     end_time = models.DateTimeField(default=timezone.now)
+            
+    class Meta:
+        verbose_name = "Trip"
+        verbose_name_plural = "Trips"
 
     def __str__(self):
         return f"Trip {self.trip_id} on {self.route.name}"
@@ -126,6 +158,10 @@ class Booking(models.Model):
     passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE, related_name="bookings")
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="bookings")
     booking_time = models.DateTimeField(auto_now_add=True)
+            
+    class Meta:
+        verbose_name = "Booking"
+        verbose_name_plural = "Bookings"
 
     def __str__(self):
         return f"Booking {self.booking_id} by {self.passenger.full_name}"
@@ -137,6 +173,10 @@ class Payment(models.Model):
     amount = models.FloatField(default=0.0)
     status = models.CharField(max_length=50, default="PENDING")
     payment_date = models.DateTimeField(default=timezone.now)
+            
+    class Meta:
+        verbose_name = "Payment"
+        verbose_name_plural = "Payments"
 
     def __str__(self):
         return f"Payment {self.payment_id} - {self.status}"
@@ -146,6 +186,10 @@ class Ticket(models.Model):
     ticket_id = models.AutoField(primary_key=True)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="tickets")
     seat_number = models.CharField(max_length=10, default="0")
+            
+    class Meta:
+        verbose_name = "Ticket"
+        verbose_name_plural = "Tickets"
 
     def __str__(self):
         return f"Ticket {self.ticket_id} - Seat {self.seat_number}"
