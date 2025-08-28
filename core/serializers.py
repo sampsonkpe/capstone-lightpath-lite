@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from .models import (
     User, Role, Passenger, Conductor,
-    Bus, Route, Trip, Booking, Ticket, Payment
+    Bus, Route, Trip, Booking, Ticket, Payment, Weather
 )
 
 
@@ -53,7 +53,7 @@ class PassengerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Passenger
-        fields = ("id", "user", "user_id", "phone_number")
+        fields = ("id", "user", "user_id", "full_name", "username", "contact_number")
 
 
 class ConductorSerializer(serializers.ModelSerializer):
@@ -64,7 +64,7 @@ class ConductorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conductor
-        fields = ("id", "user", "user_id", "employee_id")
+        fields = ("id", "user", "user_id", "full_name", "contact_number")
 
 
 # Transport Models
@@ -76,7 +76,7 @@ class BusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bus
-        fields = ("id", "number_plate", "capacity", "conductor", "conductor_id")
+        fields = ("id", "registration_number", "capacity", "conductor", "conductor_id")
 
     def validate_capacity(self, value):
         if value <= 0:
@@ -87,8 +87,12 @@ class BusSerializer(serializers.ModelSerializer):
 class RouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Route
-        fields = ("id", "start_point", "end_point", "description")
+        fields = ("id", "name", "start_point", "end_point")
 
+class WeatherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Weather
+        fields = ("id", "condition", "temperature", "timestamp")
 
 class TripSerializer(serializers.ModelSerializer):
     bus = BusSerializer(read_only=True)
@@ -103,6 +107,10 @@ class TripSerializer(serializers.ModelSerializer):
     conductor_id = serializers.PrimaryKeyRelatedField(
         queryset=Conductor.objects.all(), source="conductor", write_only=True, required=False, allow_null=True
     )
+    weather = WeatherSerializer(read_only=True)
+    weather_id = serializers.PrimaryKeyRelatedField(
+        queryset=Weather.objects.all(), source="weather", write_only=True, required=False, allow_null=True
+    )
 
     class Meta:
         model = Trip
@@ -111,14 +119,15 @@ class TripSerializer(serializers.ModelSerializer):
             "bus", "bus_id",
             "route", "route_id",
             "conductor", "conductor_id",
-            "departure_time", "arrival_time",
+            "weather", "weather_id",
+            "start_time", "end_time",
         )
 
     def validate(self, attrs):
-        dep = attrs.get("departure_time")
-        arr = attrs.get("arrival_time")
-        if dep and arr and arr <= dep:
-            raise ValidationError("Arrival time must be after departure time.")
+        start = attrs.get("start_time")
+        end = attrs.get("end_time")
+        if start and end and end <= start:
+            raise ValidationError("End time must be after start time.")
         return attrs
 
 
@@ -135,39 +144,33 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ("id", "passenger", "passenger_id", "trip", "trip_id", "booking_time", "status")
+        fields = ("id", "passenger", "passenger_id", "trip", "trip_id", "booking_time")
         read_only_fields = ("booking_time",)
 
     def validate(self, attrs):
-        """
-        - Prevent duplicate passenger->trip bookings.
-        - Prevent non-admin users from creating bookings on behalf of others.
-        """
         passenger = attrs.get("passenger")
         trip = attrs.get("trip")
 
         request = self.context.get("request") if self.context else None
         user = getattr(request, "user", None)
 
-        # If passenger + trip are both supplied (write path),
-        # ensure duplicates do not exist.
+        # Prevent duplicate bookings for same passenger & trip
         if passenger and trip:
             exists = Booking.objects.filter(passenger=passenger, trip=trip).exists()
             if exists:
                 raise ValidationError("This passenger already has a booking for the selected trip.")
 
-        # If passenger provided by client, ensure client is admin or it's their own passenger profile
+        # Role-based restriction: non-admins cannot create bookings for others
         if passenger and user and user.is_authenticated:
-            role = getattr(user, "role", None)
-            role_name = getattr(role, "name", "").lower() if role else ""
+            role_name = getattr(getattr(user, "role", None), "name", "").lower()
             if role_name != "admin":
-                # non-admins cannot create bookings for others
-                if not hasattr(user, "passenger_profile") or passenger != user.passenger_profile:
+                # Non-admins must book only for themselves
+                if not hasattr(user, "passenger_profile") or passenger not in user.passenger_profiles.all():
                     raise ValidationError("You cannot create a booking for another passenger.")
         return attrs
 
     def create(self, validated_data):
-        # allow views to set passenger automatically (e.g. serializer.save(passenger=...))
+        # Allow views to set passenger automatically if needed
         return super().create(validated_data)
 
 
@@ -179,35 +182,14 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ("id", "booking", "booking_id", "issue_date", "seat_number")
-        read_only_fields = ("issue_date",)
+        fields = ("id", "booking", "booking_id", "seat_number")
 
     def validate(self, attrs):
         booking = attrs.get("booking")
         seat = attrs.get("seat_number")
-
-        request = self.context.get("request") if self.context else None
-        user = getattr(request, "user", None)
-
-        if booking and seat:
-            trip = booking.trip
-            # check seat uniqueness for the trip
-            if Ticket.objects.filter(booking__trip=trip, seat_number=seat).exists():
-                raise ValidationError("This seat is already taken for the selected trip.")
-
-        # If the requester is a passenger, ensure they own the booking
-        if user and user.is_authenticated:
-            role = getattr(user, "role", None)
-            role_name = getattr(role, "name", "").lower() if role else ""
-            if role_name == "passenger":
-                # passenger may only create tickets for their own bookings
-                if not hasattr(user, "passenger_profile") or booking.passenger != user.passenger_profile:
-                    raise ValidationError("You cannot create/issue a ticket for someone else's booking.")
+        if booking and seat and Ticket.objects.filter(booking__trip=booking.trip, seat_number=seat).exists():
+            raise ValidationError("This seat is already taken for the selected trip.")
         return attrs
-
-    @transaction.atomic
-    def create(self, validated_data):
-        return super().create(validated_data)
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -218,7 +200,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ("id", "booking", "booking_id", "amount", "payment_date", "status")
+        fields = ("id", "booking", "booking_id", "amount", "status", "payment_date")
         read_only_fields = ("payment_date",)
 
     def validate_amount(self, value):
