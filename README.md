@@ -54,7 +54,6 @@ capstone-lightpath-lite/
 - Database: PostgreSQL (or SQLite for development)
 - Version Control: Git and GitHub
 - External API: OpenWeather API
-- Development tools: Postman, cURL for API testing
 - Testing: Django Test Framework / pytest
 - Authentication: JWT (JSON Web Tokens)
 

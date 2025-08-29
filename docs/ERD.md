@@ -97,7 +97,8 @@ erDiagram
     TICKET {
         int ticket_id PK
         int booking_id FK
-        string qr_code
+        int trip_id FK
+        string seat_number
         datetime issued_at
     }
 
