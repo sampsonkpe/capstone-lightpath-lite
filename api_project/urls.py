@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.http import HttpResponse, JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from core.views import AdminRouteListCreateView, RouteListCreateView
+
 def index(request):
     return HttpResponse("Hey, there! Welcome to LightPath-Lite API!")
 
@@ -17,12 +19,14 @@ def api_root(request):
     })
 
 urlpatterns = [
+    path("", index, name="index"),
     path("admin/", admin.site.urls),
 
     # Core App routes
     path("api/core/", include(("core.urls", "core"), namespace="core")),
 
     # Auth Routes (JWT)
+    path('admin/routes/', AdminRouteListCreateView.as_view(), name='admin-routes'),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 

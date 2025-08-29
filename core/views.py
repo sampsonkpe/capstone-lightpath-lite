@@ -1,11 +1,14 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from django.http import JsonResponse
+from rest_framework import generics, status, permissions
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .services import get_current_weather
-
-from .models import Bus, Route, Trip, Booking, Ticket, Payment, Conductor, Weather
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import Bus, Role, Route, Trip, Booking, Ticket, Payment, Conductor, Weather, Passenger
 from .serializers import (
     BusSerializer, RouteSerializer, TripSerializer,
     BookingSerializer, TicketSerializer, PaymentSerializer,
@@ -15,6 +18,85 @@ from .permissions import (
     IsAdmin, IsConductor, IsPassenger, IsOwnerOrAdmin,
     IsAdminOrReadOnly, IsAdminOrConductorOrReadOnly
 )
+
+User = get_user_model()
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register(request):
+    data = request.data
+    if User.objects.filter(email=data.get("email")).exists():
+        return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get the Role instance
+    role_name = data.get("role", "passenger")
+    try:
+        role_instance = Role.objects.get(name__iexact=role_name)
+    except Role.DoesNotExist:
+        return Response({"error": f"Role '{role_name}' does not exist."}, status=400)
+    
+    user = User.objects.create(
+        email=data.get("email"),
+        password=make_password(data.get("password")),
+        role=role_instance
+    )
+
+    if role_instance.name.lower() == "passenger":
+        Passenger.objects.create(user=user)
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        "message": "User registered successfully",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role.name
+        },
+        "token": {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token)
+        }
+    }, status=status.HTTP_201_CREATED)
+
+@api_view(["GET", "PATCH"])
+@permission_classes([IsAuthenticated])
+def profile(request):
+    user = request.user
+    passenger = getattr(user, "passenger_profile", None)
+
+    if request.method == 'GET':
+        # Return user + passenger info
+        data = {
+            "email": user.email,
+            "full_name": passenger.full_name if passenger else "",
+            "contact_number": passenger.contact_number if passenger else "",
+            "username": passenger.username if passenger else ""
+        }
+        return Response(data)
+
+    elif request.method == 'PATCH':
+        # Update passenger profile
+        if not passenger:
+            return Response({"error": "Passenger profile does not exist."}, status=400)
+        
+        full_name = request.data.get("full_name")
+        contact_number = request.data.get("contact_number")
+        username = request.data.get("username")
+
+        if full_name:
+            passenger.full_name = full_name
+        if contact_number:
+            passenger.contact_number = contact_number
+        if username:
+            passenger.username = username
+
+        passenger.save()
+        return Response({
+            "full_name": passenger.full_name,
+            "contact_number": passenger.contact_number,
+            "username": passenger.username
+        })
 
 # Helper Mixins
 class RoleMixin:
@@ -38,6 +120,16 @@ class BusRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroyAPIV
 
 
 # Route Views (Admins create; authenticated read)
+class AdminRouteListCreateView(generics.ListCreateAPIView):
+    queryset = Route.objects.all()
+    serializer_class = RouteSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminRouteRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Route.objects.all()
+    serializer_class = RouteSerializer
+    permission_classes = [permissions.IsAdminUser]
+ 
 class RouteListCreateView(RoleMixin, generics.ListCreateAPIView):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
@@ -253,3 +345,19 @@ def current_weather(request):
         return Response(data)
     except Exception as e:
         return Response({"error": str(e)}, status=400)
+    
+
+def core_root(request):
+    return JsonResponse({
+        "message": "Welcome to the LightPath Lite Core API",
+        "available_endpoints": {
+            "buses": "/api/core/buses/",
+            "routes": "/api/core/routes/",
+            "trips": "/api/core/trips/",
+            "bookings": "/api/core/bookings/",
+            "tickets": "/api/core/tickets/",
+            "payments": "/api/core/payments/",
+            "conductors": "/api/core/conductors/",
+            "weather": "/api/core/weather/"
+        }
+    })

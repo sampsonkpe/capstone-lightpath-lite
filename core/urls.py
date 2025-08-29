@@ -3,24 +3,37 @@ from . import views
 from .views import (
     BusListCreateView, BusRetrieveUpdateDestroyView,
     RouteListCreateView, RouteRetrieveUpdateDestroyView,
+    AdminRouteListCreateView, WeatherRetrieveUpdateDestroyView,
     TripListCreateView, TripRetrieveUpdateDestroyView,
     BookingListCreateView, BookingRetrieveUpdateDestroyView,
     TicketListCreateView, TicketRetrieveUpdateDestroyView,
     PaymentListCreateView, PaymentRetrieveUpdateDestroyView,
     ConductorListCreateView, ConductorRetrieveUpdateDestroyView,
-    WeatherListCreateView, WeatherRetrieveUpdateDestroyView,
+    WeatherListCreateView, AdminRouteRetrieveUpdateDestroyView, core_root,
 )
+from .views import register, profile
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 app_name = "core"
 
 urlpatterns = [
+    path("", core_root, name="core-root"),
+
+    #Auth Endpoints
+    path("auth/register/", register, name="register"),
+    path("auth/profile/", profile, name="profile"),
+    path("auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
     # Bus
     path("buses/", BusListCreateView.as_view(), name="bus-list-create"),
     path("buses/<int:pk>/", BusRetrieveUpdateDestroyView.as_view(), name="bus-detail"),
 
     # Route
-    path("routes/", RouteListCreateView.as_view(), name="route-list-create"),
-    path("routes/<int:pk>/", RouteRetrieveUpdateDestroyView.as_view(), name="route-detail"),
+    path('admin/routes/', AdminRouteListCreateView.as_view(), name='admin-routes'),
+    path('routes/', RouteListCreateView.as_view(), name='routes-list-create'),
+    path('routes/<int:pk>/', RouteRetrieveUpdateDestroyView.as_view(), name='routes-detail'),
+    path('admin/routes/<int:pk>/', AdminRouteRetrieveUpdateDestroyView.as_view(), name='admin-route-detail'),
 
     # Trip
     path("trips/", TripListCreateView.as_view(), name="trip-list-create"),
