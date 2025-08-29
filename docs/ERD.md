@@ -1,21 +1,21 @@
 # Entity Relationship Diagram (ERD) – LightPath Lite
 
-This ERD models the backend schema for **LightPath Lite**, a REST API for managing and tracking public transport routes in Accra.  
+This ERD models the backend schema for **LightPath Lite**, a REST API for managing and tracking public transport routes in Accra.
 It covers users, passengers, conductors, buses, routes, trips, bookings, payments, and tickets.
 
 ---
 
 ## Schema Overview
-- **USER**: Stores authentication details (email, password, role).  
-- **PASSENGER**: Profile for commuters, linked to a user.  
-- **CONDUCTOR**: Profile for conductors, linked to a user.  
-- **BUS**: Contains bus details, each linked to a conductor.  
-- **ROUTE**: Defines start/end locations and stop lists.  
-- **WEATHER**: Stores weather data affecting trips.  
-- **TRIP**: Connects a bus, route, conductor, and weather at a scheduled date/time.  
-- **BOOKING**: Reservation by a passenger for a trip.  
-- **PAYMENT**: Linked to a booking, tracks transaction status.  
-- **TICKET**: Generated for a booking, contains a QR code.  
+- **USER**: Stores authentication details (email, password, role).
+- **PASSENGER**: Profile for commuters, linked to a user.
+- **CONDUCTOR**: Profile for conductors, linked to a user.
+- **BUS**: Contains bus details, each linked to a conductor.
+- **ROUTE**: Defines start/end locations and stop lists.
+- **WEATHER**: Stores weather data affecting trips.
+- **TRIP**: Connects a bus, route, conductor, and weather at a scheduled date/time.
+- **BOOKING**: Reservation by a passenger for a trip.
+- **PAYMENT**: Linked to a booking, tracks transaction status.
+- **TICKET**: Generated for a booking, contains a QR code.
 
 ---
 
@@ -105,10 +105,10 @@ erDiagram
     USER ||--o{ PASSENGER : "can be"
     USER ||--o{ CONDUCTOR : "can be"
     CONDUCTOR ||--o{ BUS : "manages"
-    BUS ||--o{ TRIP : "used in"
+    BUS ||--o{ TRIP : "assigned to"
     ROUTE ||--o{ TRIP : "defines"
     WEATHER ||--o{ TRIP : "affects"
     PASSENGER ||--o{ BOOKING : "makes"
     TRIP ||--o{ BOOKING : "allows"
-    BOOKING ||--|| TICKET : "issues"
+    BOOKING ||--|| TICKET : "generates"
     BOOKING ||--o{ PAYMENT : "initiates"

@@ -217,7 +217,7 @@ class Ticket(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="tickets")
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="tickets")
     seat_number = models.CharField(max_length=10, default="0")
-            
+
     class Meta:
         verbose_name = "Ticket"
         verbose_name_plural = "Tickets"

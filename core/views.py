@@ -1,6 +1,9 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .services import get_current_weather
 
 from .models import Bus, Route, Trip, Booking, Ticket, Payment, Conductor, Weather
 from .serializers import (
@@ -241,3 +244,12 @@ class WeatherRetrieveUpdateDestroyView(RoleMixin, generics.RetrieveUpdateDestroy
     queryset = Weather.objects.all()
     serializer_class = WeatherSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
+@api_view(['GET'])
+def current_weather(request):
+    city = request.GET.get('city', 'Accra')
+    try:
+        data = get_current_weather(city)
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)

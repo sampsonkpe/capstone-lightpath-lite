@@ -93,9 +93,9 @@ All endpoints follow RESTful conventions and use JSON for request and response b
 ---
 
 ## Notes
-- Auth Required: Indicates whether authentication is needed.  
-- `Yes (Admin)` means only admin users can access the endpoint.  
-- Authentication uses JWT tokens.  
+- Auth Required: Indicates whether authentication is needed.
+- `Yes (Admin)` means only admin users can access the endpoint.
+- Authentication uses JWT tokens.
 - All requests and responses use JSON unless otherwise noted.
 - `{id}` denotes a resource’s unique identifier.
 - `{location}` is a city or region name, e.g., `Accra` or `Dansoman`.

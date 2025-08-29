@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import (
     BusListCreateView, BusRetrieveUpdateDestroyView,
     RouteListCreateView, RouteRetrieveUpdateDestroyView,
@@ -44,4 +45,5 @@ urlpatterns = [
     # Weather
     path("weather/", WeatherListCreateView.as_view(), name="weather-list-create"),
     path("weather/<int:pk>/", WeatherRetrieveUpdateDestroyView.as_view(), name="weather-detail"),
+    path('weather/current/', views.current_weather, name='current-weather'),
 ]
