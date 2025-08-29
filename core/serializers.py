@@ -165,7 +165,7 @@ class BookingSerializer(serializers.ModelSerializer):
             role_name = getattr(getattr(user, "role", None), "name", "").lower()
             if role_name != "admin":
                 # Non-admins must book only for themselves
-                if not hasattr(user, "passenger_profile") or passenger not in user.passenger_profiles.all():
+                if not hasattr(user, "passenger_profile") or passenger != user.passenger_profile:
                     raise ValidationError("You cannot create a booking for another passenger.")
         return attrs
 

@@ -8,23 +8,24 @@ def index(request):
 
 def api_root(request):
     return JsonResponse({
-        "buses": "/api/core/buses/",
-        "routes": "/api/core/routes/",
-        "trips": "/api/core/trips/",
-        "bookings": "/api/core/bookings/",
-        "tickets": "/api/core/tickets/",
-        "payments": "/api/core/payments/",
-        "conductors": "/api/core/conductors/"
+        "message": "Welcome to LightPath Lite API",
+        "auth": {
+            "login": "/api/token/",
+            "refresh": "/api/token/refresh/"
+        },
+        "core_endpoints": "/api/core/"
     })
 
 urlpatterns = [
-    path("", index),
     path("admin/", admin.site.urls),
-    path("api/core/", api_root),
-    path("api/core/", include("core.urls")),
-]
 
-urlpatterns += [
-    path("api/core/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/core/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Core App routes
+    path("api/core/", include(("core.urls", "core"), namespace="core")),
+
+    # Auth Routes (JWT)
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # API root
+    path("api/", api_root, name="api_root"),
 ]
