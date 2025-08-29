@@ -44,7 +44,7 @@ All endpoints follow RESTful conventions and use JSON for request and response b
 |----------|--------|-------------|---------------|
 | `/api/buses/` | GET | List all buses | Yes |
 | `/api/buses/<id>/` | GET | Retrieve bus details | Yes |
-| `/api/buses/` | POST | Create new bus record | Yes (Admin) |
+| `/api/buses/` | POST | Create new bus record (requires valid Conductor) | Yes (Admin) |
 | `/api/buses/<id>/` | PUT | Update bus details | Yes |
 | `/api/buses/<id>/` | DELETE | Delete bus record | Yes (Admin) |
 
@@ -66,7 +66,7 @@ All endpoints follow RESTful conventions and use JSON for request and response b
 |----------|--------|-------------|---------------|
 | `/api/trips/` | GET | List all trips | No |
 | `/api/trips/<id>/` | GET | Retrieve trip details | No |
-| `/api/trips/` | POST | Create new trip | Yes (Admin) |
+| `/api/trips/` | POST | Create new trip (requires valid Bus and optional Route) | Yes (Admin) |
 | `/api/trips/<id>/` | PUT | Update trip details | Yes (Admin) |
 | `/api/trips/<id>/` | DELETE | Delete trip | Yes (Admin) |
 
@@ -79,8 +79,8 @@ All endpoints follow RESTful conventions and use JSON for request and response b
 | `/api/bookings/my/` | GET | List bookings for current user | Yes |
 | `/api/bookings/<id>/` | GET | Retrieve booking details | Yes |
 | `/api/bookings/` | POST | Create new booking | Yes |
-| `/api/bookings/<id>/` | PUT | Update booking details | Yes |
-| `/api/bookings/<id>/` | DELETE | Cancel booking | Yes |
+| `/api/bookings/<id>/` | PUT | Update booking details | Yes (booking owner or Admin) |
+| `/api/bookings/<id>/` | DELETE | Cancel booking (booking owner or Admin) | Yes |
 
 ---
 
@@ -99,3 +99,5 @@ All endpoints follow RESTful conventions and use JSON for request and response b
 - All requests and responses use JSON unless otherwise noted.
 - `{id}` denotes a resource’s unique identifier.
 - `{location}` is a city or region name, e.g., `Accra` or `Dansoman`.
+- Bookings can only be cancelled or updated by the booking owner or an admin.
+- Buses and Trips POST requests require valid related entities (Conductor for Buses, Bus for Trips).
