@@ -26,4 +26,4 @@ def user_created(sender, instance, created, **kwargs):
                 )
                 logger.info(f"Welcome email sent to: {instance.email}")
             except Exception as e:
-                logger.error(f"Error sending welcome email to {instance.email}: {e}"
+                logger.error(f"Error sending welcome email to {instance.email}: {e}")
