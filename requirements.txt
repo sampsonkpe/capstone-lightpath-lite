@@ -8,3 +8,4 @@ sqlparse==0.5.3
 asgiref==3.9.0
 python-dotenv==1.1.1
 python-decouple==3.8
+dj-database-url==1.1.0
