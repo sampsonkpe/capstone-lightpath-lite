@@ -9,3 +9,5 @@ asgiref==3.9.0
 python-dotenv==1.1.1
 python-decouple==3.8
 dj-database-url==1.1.0
+requests==2.31.0
+djangorestframework-simplejwt==5.2.2

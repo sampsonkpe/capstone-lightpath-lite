@@ -159,4 +159,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 OPENWEATHER_API_KEY = config('OPENWEATHER_API_KEY', default='')
 
 AUTH_USER_MODEL = "core.User"
-
