@@ -31,6 +31,12 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             user.set_unusable_password()
         user.save()
+
+        if user.role == "passenger":
+            Passenger.objects.create(user=user, full_name=user.email, username=user.username, contact_number="")
+        elif user.role == "conductor":
+            Conductor.objects.create(user=user, full_name=user.email, username=user.username, contact_number="")
+
         return user
 
     def update(self, instance, validated_data):

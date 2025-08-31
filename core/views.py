@@ -342,7 +342,15 @@ def current_weather(request):
     city = request.GET.get('city', 'Accra')
     try:
         data = get_current_weather(city)
-        return Response(data)
+        result = {
+            "city": data.get("name"),
+            "temperature": data["main"]["temp"],
+            "feels_like": data["main"]["feels_like"],
+            "humidity": data["main"]["humidity"],
+            "weather": data["weather"][0]["description"],
+            "wind_speed": data["wind"]["speed"]
+        }
+        return Response(result)
     except Exception as e:
         return Response({"error": str(e)}, status=400)
     

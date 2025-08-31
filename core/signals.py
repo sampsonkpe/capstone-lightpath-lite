@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
+from .models import Conductor, Passenger, Role
 import logging
 
 User = get_user_model()
@@ -27,3 +28,10 @@ def user_created(sender, instance, created, **kwargs):
                 logger.info(f"Welcome email sent to: {instance.email}")
             except Exception as e:
                 logger.error(f"Error sending welcome email to {instance.email}: {e}")
+
+@receiver(post_save, sender=User)
+def assign_default_role(sender, instance, created, **kwargs):
+    if created and not instance.role:
+        passenger_role, _ = Role.objects.get_or_create(name="Passenger")
+        instance.role = passenger_role
+        instance.save()
