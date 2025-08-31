@@ -1,7 +1,6 @@
 Django==5.2.4
 djangorestframework==3.16.0
 django-taggit==6.1.0
-psycopg2-binary==2.9.8
 Pillow==11.3.0
 mysql-connector-python==9.3.0
 sqlparse==0.5.3
@@ -11,3 +10,4 @@ python-decouple==3.8
 dj-database-url==1.1.0
 requests==2.31.0
 djangorestframework-simplejwt==5.2.2
+psycopg==3.2.9
