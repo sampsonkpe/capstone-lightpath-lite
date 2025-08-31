@@ -15,7 +15,6 @@ SECRET_KEY = config("SECRET_KEY", default="unsafe-secret-key")
 DEBUG = config("DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,lightpath-lite-backend.onrender.com", cast=Csv())
 
-
 # Application definition
 
 INSTALLED_APPS = [
