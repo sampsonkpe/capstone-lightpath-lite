@@ -1,19 +1,16 @@
 from datetime import timedelta
 from pathlib import Path
 from decouple import config, Csv
-import os
 import dj_database_url
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY", default="unsafe-secret-key")
-DEBUG = config("DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,lightpath-lite-backend.onrender.com", cast=Csv())
+DEBUG = config("DEBUG", default=False, cast=bool)
+DJANGO_LOCAL = config("DJANGO_LOCAL", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
 
 # Application definition
 
@@ -90,32 +87,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'api_project.wsgi.application'
 
 
-'''
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "lightpath_lite",
-        "USER": "sampsonkpe",
-        "PASSWORD": "",
-        "HOST": "localhost",
-        "PORT": "5432",
+# Database configuration
+
+if DJANGO_LOCAL:
+    DATABASES = {
+        "default": dj_database_url.parse(config("DATABASE_URL"))
     }
-}
-
-DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL")
-    )
-}
-'''
-
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+else:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            config("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
