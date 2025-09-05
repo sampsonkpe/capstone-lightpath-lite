@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.http import HttpResponse, JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from core.views import AdminRouteListCreateView, RouteListCreateView
+from core.views import AdminRouteListCreateView, RouteListCreateView, home
 
 def index(request):
     return HttpResponse("Hey, there! Welcome to LightPath-Lite API!")
@@ -19,7 +19,8 @@ def api_root(request):
     })
 
 urlpatterns = [
-    path("", index, name="index"),
+    path("", home, name='home'),
+    path("index/", index, name="index"),
     path("admin/", admin.site.urls),
 
     # Core App routes

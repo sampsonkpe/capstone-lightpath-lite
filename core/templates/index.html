@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>LightPath Lite</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+        <div class="text-center max-w-xl p-6 bg-white rounded-2xl shadow-lg">
+            <h1 class="text-4xl font-bold mb-4 text-blue-600">LightPath Lite</h1>
+            <p class="text-lg mb-6">
+                A REST API for tracking and managing public transport routes in and around Accra. 
+            </p>
+
+            <!-- Dynamic API Info -->
+            <div id="api-info" class="bg-gray-50 border rounded-lg p-4 mb-6 text-left">
+                <p class="text-gray-500">Loading API details...</p>
+            </div>
+
+            <!-- Links -->
+            <div class="space-x-4">
+                <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">
+                    Admin Panel
+                </a>
+                <a href="/api/" class="px-4 py-2 bg-gray-200 rounded-lg shadow hover:bg-gray-300">
+                    API Endpoints
+                </a>
+            </div>
+
+            <p class="text-sm text-gray-500 mt-6">
+                Powered by Django & Django REST Framework. <br>
+                &copy; 2025 LightPath Lite. All rights reserved.
+            </p>
+        </div>
+
+        <script>
+            async function loadApiInfo() {
+                try {
+                    const res = await fetch("/api/");
+                    const data = await res.json();
+
+                    let html = `
+                        <h2 class="text-xl font-semibold text-gray-800 mb-2">${data.message}</h2>
+                        <h3 class="text-lg font-medium text-gray-700 mt-4">Authentication</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-600">
+                            <li>Login: <code class="bg-gray-200 px-1 rounded">${data.auth.login}</code></li>
+                            <li>Refresh: <code class="bg-gray-200 px-1 rounded">${data.auth.refresh}</code></li>
+                        </ul>
+                        <h3 class="text-lg font-medium text-gray-700 mt-4">Core Endpoints</h3>
+                        <p class="text-sm text-gray-600">
+                            <code class="bg-gray-200 px-1 rounded">${data.core_endpoints}</code>
+                        </p>
+                    `;
+
+                    document.getElementById("api-info").innerHTML = html;
+                } catch (err) {
+                    document.getElementById("api-info").innerHTML = 
+                        "<p class='text-red-500'>Failed to load API info.</p>";
+                }
+            }
+
+            loadApiInfo();
+        </script>
+    </body>
+</html>

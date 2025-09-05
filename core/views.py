@@ -8,6 +8,7 @@ from .services import get_current_weather
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.shortcuts import render
 from .models import Bus, Role, Route, Trip, Booking, Ticket, Payment, Conductor, Weather, Passenger
 from .serializers import (
     BusSerializer, RouteSerializer, TripSerializer,
@@ -369,3 +370,6 @@ def core_root(request):
             "weather": "/api/core/weather/"
         }
     })
+
+def home(request):
+    return render(request, "index.html", {})
