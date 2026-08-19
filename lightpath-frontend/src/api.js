@@ -1,4 +1,7 @@
-const BASE_URL = "http://127.0.0.1:8000/api/core";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
+
+const BASE_URL = `${API_BASE_URL}/core`;
 
 // Save and retrieve JWT tokens
 export const saveToken = (access, refresh) => {
@@ -47,7 +50,7 @@ const post = async (endpoint, data) => {
 // Login function
 export const login = async (email, password) => {
   try {
-    const res = await fetch("http://127.0.0.1:8000/api/token/", {
+    const res = await fetch(`${API_BASE_URL}/token/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
